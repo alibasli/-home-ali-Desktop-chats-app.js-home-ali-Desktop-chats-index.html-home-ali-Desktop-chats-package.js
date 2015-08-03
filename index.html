@@ -1,0 +1,173 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      #sendMessage { background: #000; padding: 3px; position: fixed; bottom: 0; width: 65%;  }
+      #sendMessage input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      #sendMessage button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+      #kisiler { list-style-type: none; margin: 0; padding: 0; text-align:center;}
+      #kisiler li { padding: 5px 10px; width:96%; margin:auto;}
+      #kisiler li:nth-child(odd) { background: #eee; }
+	  #mesajlarim { list-style-type: none; margin: 0; padding: 0; text-align:center;}
+      #mesajlarim li { padding: 5px 10px; width:96%;}
+      #mesajlarim li:nth-child(odd) { background: #eee; }
+      #ul_msg{ width:60%; float:left; overflow-y: auto; height:580px;}
+      #ul_msg1{ width:15%;  float:right; overflow-y: auto; height:610px; 
+				-webkit-box-shadow: 0 0 2px 3px black;
+				-moz-box-shadow: 0 0 2px 3px black;
+					box-shadow: 0 0 2px 3px black;}
+	  #ul_msg2{ width:15%;  float:right; overflow-y: auto; height:610px;
+		-webkit-box-shadow: 0 0 2px 3px black;
+		-moz-box-shadow: 0 0 2px 3px black;
+		box-shadow: 0 0 2px 3px black;
+	  }
+	  #h3{ visibility: hidden;}
+    </style>
+  </head>
+  <body>
+		<div id="logindiv" style="float:left;width:300px;height:250px;overflow:scroll-y;padding:10px;">
+			<h3 id="h3">kullanici adi veya sifre hatasi</h3>			
+			<input type="text" id="text" style="width:200px;" placeholder="nickname" required>
+			<input type="button" id="datasend" value="send" />		
+		</div>
+		<div id="genel">
+			<h3>
+				<span style="float:left; margin-left:10%" id="Mesajlar">Mesajlar</span>
+				<span style="float:right; margin-right:8%">Kisiler</span>
+				<span style="float:right; margin-right:5%">Mesajlarım</span>
+				
+			</h3>
+			<br><br>
+			<div id="ul_msg">
+				<ul id="messages"></ul>
+				<form action="" id="sendMessage">
+					<input type="text" id="m" autocomplete="off" /><button>Send</button>
+				</form>
+			</div>
+			<div id="ul_msg1"><ul id="kisiler"></ul></div>
+			<div id="ul_msg2"><ul id="mesajlarim"></ul></div>			
+			
+		</div>  
+	
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+<script>
+	var socket = io.connect('http://localhost:8003');
+	var myname,myroom ;
+	
+	socket.on('login', function (data,email,room) {
+		if(data == myname){
+			$("#genel").show();
+			$("#logindiv").hide(); 
+			myroom = room;
+		}
+		else{
+			$("#h3").css("visibility:none");
+		}
+	});
+	// on connection to server, ask for user's name with an anonymous callback
+	socket.on('connect', function(){
+		// call the server-side function 'adduser' and send one parameter (value of prompt)
+		//socket.emit('adduser', myname);
+	});
+
+	// listener, whenever the server emits 'updatechat', this updates the chat body
+	socket.on('updatechat', function (username, data) {
+		$('#messages').append($('<li>').html('<b>'+username + ':</b> ' + data + '<br>'));
+	});
+
+	// listener, whenever the server emits 'updaterooms', this updates the room the client is in
+	socket.on('updateusers', function(allusers,onlineusers) {
+		$('#kisiler').empty();
+		$.each(allusers, function(key, value) {
+			if(value == myname){
+			}
+		/*	else if(value == myroom){
+				$('#kisiler').append($('<li>').text(value));
+			}*/
+			else {
+				var x= 0;
+				$.each(onlineusers, function(key1, value1) {
+					if(value == value1){
+						x=1;
+						
+					}					
+				});
+				if(value == 'Genel')
+					if(myroom == 'Genel')
+						$('#kisiler').append($('<li>').html('* <a onclick="switchRoom(\''+value+'\')">' + value + '</a>'));
+					else
+						$('#kisiler').append($('<li>').html('<a onclick="switchRoom(\''+value+'\')">' + value + '</a>'));
+				else if(x == 1)
+					if(myroom == value)
+						$('#kisiler').append($('<li>').html('* <a onclick="switchRoom(\''+value+'\')">' + value + '</a>').css("color","lightblue"));
+					else
+						$('#kisiler').append($('<li>').html('<a onclick="switchRoom(\''+value+'\')">' + value + '</a>').css("color","lightblue"));
+				else
+					if(myroom == value)
+						$('#kisiler').append($('<li>').html('* <a onclick="switchRoom(\''+value+'\')">' + value + '</a>').css("color","red"));
+					else
+						$('#kisiler').append($('<li>').html('<a onclick="switchRoom(\''+value+'\')">' + value + '</a>').css("color","red"));
+			}
+		});
+	});
+	socket.on('updateallmessages', function(msg){
+        $('#mesajlarim').empty();
+        for(var i=0;i<msg.length;i++) {			
+			if(msg[i]['user'] == myname){
+				//$('#rooms').append('<div>' + value + '</div>');
+			}
+			/*else if(msg[i]['user'] == myroom){
+				$('#mesajlarim').append($('<li>').text(msg[i]['user']));
+			}*/
+			else {
+				$('#mesajlarim').append($('<li>').html('<a onclick="switchRoom(\''+msg[i]['user']+'\')">' + msg[i]['user'] + '</a>'));
+			}
+		}
+      });
+	function switchRoom(room){
+		socket.emit('switchRoom', room);
+		$('#messages').empty();
+		myroom=room;
+		return false;
+	}	
+	$(function(){
+		$('#datasend').click( function() {			
+			myname = $('#text').val();
+			if(myname){
+				socket.emit('adduser', myname);
+				$('#text').val('');
+			}
+			else
+				alert("nickname giriniz!");
+		});
+		$('#text').keypress(function(e) {
+			if(e.which == 13) {
+				$(this).blur();
+				$('#datasend').focus().click();
+			}
+		});
+		$('#sendMessage').submit(function(){
+        socket.emit('sendchat',myroom, $('#m').val());
+        $('#m').val('');
+        return false;
+      });
+	});
+	
+</script>
+<script>
+		$(document).ready(function() {   
+			$("#genel").hide();
+			$("#logindiv").show(); 
+			$("#text").focus();  
+		});
+	</script>
+  </body>
+</html>

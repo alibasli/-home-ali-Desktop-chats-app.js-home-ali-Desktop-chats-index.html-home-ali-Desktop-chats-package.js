@@ -1,0 +1,11 @@
+{
+     "name": "chat-android-server-with-nodejs",
+     "description": "Projede socket.io ve mongo Db de kullanılmıştır.",
+     "version": "0.0.1",
+     "dependencies": {
+        "express": "",
+        "socket.io": "",
+	"should":"",
+	"monk":""
+     }
+}
